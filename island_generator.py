@@ -5,9 +5,10 @@ from scipy.spatial import Delaunay
 
 class IslandGenerator:
   def __init__(self):
-    self.screen_width = 1366
-    self.screen_height = 768
-    self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.FULLSCREEN)
+    pygame.display.set_caption('Maxima')
+    self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    self.screen_width = self.screen.get_width()
+    self.screen_height = self.screen.get_height()
     self.background_color = (0, 0, 0)
     self.circle_color = (255, 255, 255)
     self.circle_radius = 3
@@ -17,12 +18,12 @@ class IslandGenerator:
     self.min_x = self.max_x = self.min_y = self.max_y = 0
     self.connect_ratio = 5
     self.longest_side = None
-    self.regenerate_points()
+    self.generate_points()
 
   def distance(self, p1, p2):
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
-  def regenerate_points(self):
+  def generate_points(self):
     self.points = [(0,0)]
     while len(self.points) < self.max_points:
       magnitude = 1 + random.random()*(self.connect_ratio-1)
@@ -61,27 +62,60 @@ class IslandGenerator:
             edges.append(edge)
     return edges
 
+  def render_points(self):
+    for i, point in enumerate(self.points):
+      if i in self.hovered_points:
+        color = (100, 200, 100)
+        pygame.draw.circle(self.screen, color, point, self.circle_radius+5, 1)
+      else:
+        color = self.circle_color
+      pygame.draw.circle(self.screen, color, point, self.circle_radius)
+
+  def render_edges(self):
+    triangle_edges = self.find_edges()
+    for e in triangle_edges:
+      pygame.draw.line(self.screen, '#7777ff', self.points[e[0]], self.points[e[1]])
+
+  def render_border(self):
+    side_length = self.screen.get_height()
+    border_rect = pygame.Rect(0.5*(self.screen_width - self.screen_height), 0, side_length, side_length)
+    pygame.draw.rect(self.screen, '#ffffff', border_rect, 1)
+
+  def handle_events(self):
+    for event in pygame.event.get():
+      if event.type == pygame.QUIT:
+        self.quit_game()
+      elif event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_ESCAPE:
+          self.quit_game()
+        elif event.key == pygame.K_SPACE:
+          self.generate_points()
+      elif event.type == pygame.MOUSEMOTION:
+        self.hovered_points = []
+        mouse_pos = pygame.mouse.get_pos()
+        for i, point in enumerate(self.points):
+          if self.distance(mouse_pos, point) < 20:
+            self.hovered_points.append(i)
+          
   def update_screen(self):
     self.screen.fill(self.background_color)
-    delaunay_edges = self.find_edges()
-    for e in delaunay_edges:
-      pygame.draw.line(self.screen, '#7777ff', self.points[e[0]], self.points[e[1]])
-    for i, point in enumerate(self.points):
-      pygame.draw.circle(self.screen, self.circle_color, point, self.circle_radius)
-    pygame.draw.rect(self.screen, "#ffffff", pygame.Rect(0.5*(self.screen_width - self.screen_height), 0, self.screen_height, self.screen_height), 1)
+    self.render_edges()
+    self.render_points()
+    self.render_border()
     pygame.display.flip()
 
+  def quit_game(self):
+    pygame.quit()
+    exit()
+
   def run(self):
-    running = True
-    while running:
-      for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-          running = False
-        elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-          self.regenerate_points()
+    clock = pygame.time.Clock()
+    while True:
+      self.handle_events()
       self.update_screen()
+      clock.tick(60)
+      pygame.display.update()
 
 if __name__ == '__main__':
-  pygame.init()
   generator = IslandGenerator()
   generator.run()
