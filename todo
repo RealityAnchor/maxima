@@ -4,3 +4,6 @@ abandon pygame
 remove longest edge of triangles with two extremely acute angles
   triangle filtering
   constrained Delaunay triangulation
+
+readme
+license

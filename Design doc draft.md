@@ -1,12 +1,9 @@
-____________
-▒ Overview ▒
-
+# Overview
 Maxima is a massively multiplayer simultaneous-turn FFA strategy game
 
 Players command civilians, soldiers, and heroes to farm, fight, and explore in a massive world interconnected by portals. Challenge limited # of players to skirmish in limited space.
-___________
-▒ VICTORY ▒
 
+# Victory
 Persistent Match
 no overall victory condition, so how to incentivize combat goal?
 monthly leaderboards
@@ -15,9 +12,7 @@ monthly leaderboards
 Quick Match
 
 
-________
-▒ MENU ▒
-
+# Menu
 Persistent Match
 	show ~3x2 grid of matches as large rectangles
 	map shows extent of player vision
@@ -30,43 +25,38 @@ Quick Match
 Map Editor
 Help
 Settings
-__________
-▒ PLAYER ▒
 
+# Player
 
-_________
-▒ WORLD ▒
-
+# World
 The game world is a network of islands connected vertically by portals
 An island is a network of regions connected by footpaths
-__________
-▒ ISLAND ▒
 
+# Island
 Random Generation
 - on islands with randomly generated region locations, use Delaunay triangulation to determine which regions should have paths between them
 - rotational symmetry for competitive matches
 - increase density of regions to represent difficulty of terrain
 - consider pacing difference between persistent/quick matches
-	
-O/U
-Overworld
+
+## Overworld
 bespoke graph theory for the civilized gamer
+
 looks: heavenly, angular, geometric
 
-Underworld
+## Underworld
 weird math ghouls practicing stochastic necromancy
+
 looks: twisted, warped, curvy
+
 portals between both
 
 Manual Generation
 - that bespoke feel
 - allow user-created maps
 
-__________
-▒ REGION ▒
-
+# Region
 a region is a vertex in a graph of other regions
-
 	
 Structure
 	Artificial
@@ -99,9 +89,8 @@ determined by five binary variables
 		a region is bloodied for twelve turns when a unit dies in it
 
 XMINDED UP TO HERE ------------------------------
-__________
-▒ PORTAL ▒
 
+# Portal
 portals are special structures in regions
 when an army enters a portal region as its designated move:
 	1. complete combat in that region
@@ -110,9 +99,7 @@ when an army enters a portal region as its designated move:
 Portal Storms
 - rare weather event
 
-________
-▒ PATH ▒
-
+# Path
 the connection along which units can move between two regions
 Movement Mechanics
 	press leftclick with mouse cursor over friendly region
@@ -124,25 +111,20 @@ Movement Mechanics
 one-way paths
 constricted paths
 
-___________
-▒ TERRAIN ▒
-
+# Terrain
 Vision
 	infinite range
 	no horizon
 	blocking: mountains, hero abilities, structures
 		
-
-	
-Regions
+# Region
 Slope
 1-6 lanes visual
 Gives one team
 Each turn lasts the same length of time (eg. 30 second turn blitz or 24 hour turn correspondence). Players may set up zero or arbitarily many actions in planning phase of each turn. When turn timer dings periodically, all actions happen simultaneously and a new planning phase begins immediately.
  ARMY: the collection of units on a region
-________
-▒ UNIT ▒
 
+# Unit
 All (?) player action in Maxima is done via units
 
 Units are born as civilians in human structures
@@ -151,7 +133,7 @@ Transform into professionals when entering regions that have training structures
 	soldier, messenger 100%
 	cavalry? archers?
 	
-Messengers
+## Messenger
 "Don't Shoot The Messenger
 - 
 Carry text messages written by user
@@ -171,9 +153,8 @@ Soldiers
 	Distinct combat values?
 		3/1 = 3 combat strength while moving and 1 combat strength while staying still
 		different unit types in same formation?
-__________
-▒ Combat ▒
 
+# Combat
 Combat happens once per turn in any region or path that contain units from 
 at least two players and soldiers from at least one. The player with the highest combat strength wins outright with no losses. All units belonging to other players are removed from the game.
 
@@ -185,8 +166,33 @@ Player combat strength at a region
 		buffs/debuffs from terrain, structures, heroes
 Path combat: aA from rX moves into rY the same turn that aB from rY moves into rX
 Region combat
-________
-▒ HERO ▒ (maybe scrap for more types of professionals)
+
+Items
+Generation
+Upgrade quests from structs
+
+# Food
+regions generate 1 meal per abundance per turn
+units consume 1 meal per unit per turn
+allow players to press one button to generate new civilians on all valid units across the map, costing 12 food
+total abundance in an area is the upper stable limit for units there
+when turn rolls over, if an army has less food than it needs
+
+surplus is stored (up to 30 per unit)
+
+Correspondence time control options
+	X moves over Y duration every Z days at T time
+	4 moves over 30 minutes every 1 day at 19:00
+		turns tick every day at 19:00, 19:10, 19:20, and 19:30
+	1 move over 7 days every 7 day at Sundays 08:00 MST
+		turns tick once per week on Sunday mornings
+	"Ready" toggle to advance game if everyone is ready? Can portal logic handle asynchronous worlds?
+		
+allow players to view turn history (on delay?)
+make a publically visible turn history once game ends
+
+# Hero
+- (maybe scrap for more types of professionals)
 
 One hero per region max
 - move function disallows allied heroes moving to other allied heroes
@@ -209,34 +215,7 @@ Hiring
 Food
 - hiring cost should be vary from normal 12-meal regular citizen birth
 
-
-Items
-Generation
-Upgrade quests from structs
-________
-▒ FOOD ▒
-
-regions generate 1 meal per abundance per turn
-units consume 1 meal per unit per turn
-allow players to press one button to generate new civilians on all valid units across the map, costing 12 food
-total abundance in an area is the upper stable limit for units there
-when turn rolls over, if an army has less food than it needs
-
-surplus is stored (up to 30 per unit)
-
-Correspondence time control options
-	X moves over Y duration every Z days at T time
-	4 moves over 30 minutes every 1 day at 19:00
-		turns tick every day at 19:00, 19:10, 19:20, and 19:30
-	1 move over 7 days every 7 day at Sundays 08:00 MST
-		turns tick once per week on Sunday mornings
-	"Ready" toggle to advance game if everyone is ready? Can portal logic handle asynchronous worlds?
-		
-allow players to view turn history (on delay?)
-make a publically visible turn history once game ends
-
-
-Hero ability ideas
+## Hero ability brainstorming
 	Decoy armies - fake armies with no combat value that look normal to opponents.
 	Roadbuilding - increase unit movement across a path.
 	Catapult - bombard a region from a distance.
