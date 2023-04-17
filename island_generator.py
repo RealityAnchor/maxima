@@ -11,13 +11,16 @@ class IslandGenerator:
     self.screen_height = self.screen.get_height()
     self.background_color = (0, 0, 0)
     self.circle_color = (255, 255, 255)
+    self.edge_color = (50, 50, 255)
     self.circle_radius = 3
     self.pi = 3.14159265358979324
     self.max_points = 256
     self.points = [(0,0)]
     self.min_x = self.max_x = self.min_y = self.max_y = 0
-    self.connect_ratio = 5
+    self.connect_ratio = 4     # low = even spacing between regions (min 2)
+    self.island_angularity = 8 # low = rounder island shape (min 1)
     self.longest_side = None
+    self.closest_points = []
     self.generate_points()
 
   def distance(self, p1, p2):
@@ -28,7 +31,7 @@ class IslandGenerator:
     while len(self.points) < self.max_points:
       magnitude = 1 + random.random()*(self.connect_ratio-1)
       direction = random.random()*2*self.pi # in radians
-      prev_point = random.choice(self.points[-int(len(self.points)/3):]) # from the most recent 1/3 points
+      prev_point = random.choice(self.points[-1 - int(len(self.points)/self.island_angularity):])
       x = prev_point[0] + magnitude*math.cos(direction)
       y = prev_point[1] + magnitude*math.sin(direction)
       for p in self.points:
@@ -36,7 +39,6 @@ class IslandGenerator:
           break
       else:
         self.points.append((x,y))
-
     self.min_x = min([p[0] for p in self.points])
     self.max_x = max([p[0] for p in self.points])
     self.min_y = min([p[1] for p in self.points])
@@ -48,33 +50,42 @@ class IslandGenerator:
     for i,p in enumerate(self.points):
       self.points[i] = (round(height_factor*(p[0] - self.min_x + x_offset)) + self.circle_radius + 0.5*(self.screen_width - self.screen_height),
                         round(height_factor*(p[1] - self.min_y + y_offset) + self.circle_radius))
+    self.triangle_edges = self.calc_edges()
 
-  def find_edges(self):
-    # Compute Delaunay triangulation
-    triangulation = Delaunay(self.points)
-    # Extract edges from triangulation
+  def calc_cosines(self, sides):
+    return [(-sides[0]**2 + sides[1]**2 + sides[2]**2) / (2 * sides[1] * sides[2])
+          , (-sides[1]**2 + sides[0]**2 + sides[2]**2) / (2 * sides[0] * sides[2])
+          , (-sides[2]**2 + sides[0]**2 + sides[1]**2) / (2 * sides[0] * sides[1])]
+
+  def calc_edges(self):
+    triangulation = Delaunay(self.points, incremental=True)
     edges = []
-    for v in triangulation.simplices:
-      triangle = [(v[0], v[1]), (v[0], v[2]), (v[1], v[2])]
-      for edge in triangle:
+    for i, p in enumerate(triangulation.simplices):
+      triangle_indices = [(p[0], p[1]), (p[0], p[2]), (p[1], p[2])]
+      edge_lengths = [self.distance(self.points[edge[0]], self.points[edge[1]]) for edge in triangle_indices]
+      # the two lines below should remove edges opposite very obtuse angles, but it's buggy
+      # cosines = self.calc_cosines(edge_lengths)
+      # triangle_indices = [edge for k,edge in enumerate(triangle_indices) if cosines[k] > -0.8]
+      for j, edge in enumerate(triangle_indices):
         if sorted(edge) not in edges:
-          if round(self.distance(self.points[edge[0]], self.points[edge[1]])) < self.connect_ratio / self.longest_side * self.screen_height:
+          max_length = self.connect_ratio / self.longest_side * self.screen_height
+          if edge_lengths[j] <= max_length:
             edges.append(edge)
     return edges
 
   def render_points(self):
     for i, point in enumerate(self.points):
-      if i in self.hovered_points:
-        color = (100, 200, 100)
+      if point in self.closest_points:
+        color = (50, 255, 50)
         pygame.draw.circle(self.screen, color, point, self.circle_radius+5, 1)
+        pygame.draw.line(self.screen, color, point, pygame.mouse.get_pos())
       else:
         color = self.circle_color
       pygame.draw.circle(self.screen, color, point, self.circle_radius)
 
   def render_edges(self):
-    triangle_edges = self.find_edges()
-    for e in triangle_edges:
-      pygame.draw.line(self.screen, '#7777ff', self.points[e[0]], self.points[e[1]])
+    for e in self.triangle_edges:
+      pygame.draw.line(self.screen, self.edge_color, self.points[e[0]], self.points[e[1]])
 
   def render_border(self):
     side_length = self.screen.get_height()
@@ -90,12 +101,12 @@ class IslandGenerator:
           self.quit_game()
         elif event.key == pygame.K_SPACE:
           self.generate_points()
+          self.update_screen()
       elif event.type == pygame.MOUSEMOTION:
-        self.hovered_points = []
-        mouse_pos = pygame.mouse.get_pos()
-        for i, point in enumerate(self.points):
-          if self.distance(mouse_pos, point) < 20:
-            self.hovered_points.append(i)
+        mouse_xy = pygame.mouse.get_pos()
+        closest_distances = sorted([self.distance(p, mouse_xy) for p in self.points])[:3]
+        self.closest_points = [p for p in self.points if self.distance(p, mouse_xy) in closest_distances]
+        self.update_screen()
           
   def update_screen(self):
     self.screen.fill(self.background_color)
@@ -110,9 +121,9 @@ class IslandGenerator:
 
   def run(self):
     clock = pygame.time.Clock()
+    self.update_screen()
     while True:
       self.handle_events()
-      self.update_screen()
       clock.tick(60)
       pygame.display.update()
 
