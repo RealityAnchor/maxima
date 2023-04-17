@@ -1,0 +1,6 @@
+abandon pygame
+  d3.js
+  pyqt
+remove longest edge of triangles with two extremely acute angles
+  triangle filtering
+  constrained Delaunay triangulation
