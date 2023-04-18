@@ -11,7 +11,6 @@ monthly leaderboards
 
 Quick Match
 
-
 # Menu
 Persistent Match
 	show ~3x2 grid of matches as large rectangles
@@ -87,8 +86,6 @@ determined by five binary variables
 	Combat
 		bloodied +1 / pristine 0
 		a region is bloodied for twelve turns when a unit dies in it
-
-XMINDED UP TO HERE ------------------------------
 
 # Portal
 portals are special structures in regions

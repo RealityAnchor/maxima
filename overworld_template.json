@@ -1,0 +1,47 @@
+{
+"islands": [
+  38742: {
+    "i_name": "Hawaii",
+    "regions": [
+      0: {
+        "coords": {"x": 0, "y": 0},
+        "abundance": 2,
+        "armies": {"count": 1, "owner": "username"},
+        "p_id": 531
+      },
+      1: {
+        "coords": {"x": 100, "y": 4},
+        "abundance": 5,
+        "armies": {"count": 0, "owner": ""},
+        "p_id": 0
+      }
+    ],
+    "paths": [
+      ((0, 0), (0, 1))
+    ]
+  },
+  13003: {
+    "i_name": "Ireland",
+    "regions": [
+      0: {
+        "coords": {"x": 23, "y": 45},
+        "abundance": 1,
+        "armies": {"count": 4, "owner": "username"},
+        "p_id": 0
+      },
+      1: {
+        "coords": {"x": 10, "y": 10},
+        "abundance": 3,
+        "armies": {"count": 0, "owner": ""},
+        "p_id": 531
+      }
+    ],
+    "paths": [
+      ((0, 0), (0, 1))
+    ]
+  }
+],
+"portals": [
+  531: {"regions": [{"i_id":38742, "r_id":0}, {"i_id":13003, "r_id":1}], "p_name":"The Enchanted Track"}
+]
+}

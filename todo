@@ -5,5 +5,27 @@ remove longest edge of triangles with two extremely acute angles
   triangle filtering
   constrained Delaunay triangulation
 
-readme
-license
+if portal_id == 0, there are no portals
+
+balance knobs
+  regions per island
+  food per new unit
+  islands per world
+  abundance density
+  player spawn density
+  flanking bonus
+  vision
+
+
+discord
+  server = gameworld
+  channel = team
+  multiple AI or human players per team
+  subordinates, delegation via team leader (general), hierarchy
+  thread = island?
+
+website framework - django? flask?
+
+github
+  readme
+  license
