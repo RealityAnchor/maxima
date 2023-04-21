@@ -9,19 +9,21 @@ class IslandGenerator:
     self.screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     self.screen_width = self.screen.get_width()
     self.screen_height = self.screen.get_height()
-    self.ocean_color = (0, 0, 50)
-    self.edge_color = (50, 50, 255)
-    self.circle_radius = 5
+    self.ocean_colour = (0, 0, 50)
+    self.region_colour = (0,200,0)
+    self.path_colour = (50, 50, 255)
+    self.circle_radius = 3
     self.pi = 3.14159265358979324
     self.mouse_pressed = False
-    self.total_regions = 256
-    self.regions = {}
-    self.points = [(0,0)]
+    self.total_regions = 64
+    self.points = []
     self.min_x = self.max_x = self.min_y = self.max_y = 0
     self.connect_ratio = 4     # low = even spacing between regions (min 2)
     self.island_angularity = 8 # low = rounder island shape (min 1)
+    self.max_path_length = float()
     self.longest_side = float()
     self.closest_points = []
+    self.background_image = None
     self.generate_points()
 
   def distance(self, p1, p2):
@@ -49,56 +51,91 @@ class IslandGenerator:
     y_offset = (self.longest_side - abs(self.min_y-self.max_y)) / 2
     height_factor = (self.screen_height - 2*self.circle_radius) / self.longest_side
     for i,p in enumerate(self.points):
-      self.points[i] = (round(height_factor*(p[0] - self.min_x + x_offset)) + self.circle_radius + 0.5*(self.screen_width - self.screen_height),
+      self.points[i] = (round(height_factor*(p[0] - self.min_x + x_offset) + self.circle_radius + 0.5*(self.screen_width - self.screen_height)),
                         round(height_factor*(p[1] - self.min_y + y_offset) + self.circle_radius))
-    self.region_edges = self.calc_edges()
+    self.good_paths, self.bad_paths = self.calc_valid_paths()
 
-  def calc_cosines(self, sides):
-    return [(-sides[0]**2 + sides[1]**2 + sides[2]**2) / (2 * sides[1] * sides[2]),
-            (-sides[1]**2 + sides[0]**2 + sides[2]**2) / (2 * sides[0] * sides[2]),
-            (-sides[2]**2 + sides[0]**2 + sides[1]**2) / (2 * sides[0] * sides[1])]
+  def calc_cosines(self, triangle):
+    return ((-triangle[0]**2 + triangle[1]**2 + triangle[2]**2) / (2 * triangle[1] * triangle[2]),
+            (-triangle[1]**2 + triangle[0]**2 + triangle[2]**2) / (2 * triangle[0] * triangle[2]),
+            (-triangle[2]**2 + triangle[0]**2 + triangle[1]**2) / (2 * triangle[0] * triangle[1]))
 
-  def calc_edges(self):
+  def calc_valid_paths(self):
     triangulation = Delaunay(self.points, incremental=True)
-    edges = []
+    good_paths = []
+    bad_paths = []
+    self.max_path_length = self.connect_ratio / self.longest_side * self.screen_height
     for p in triangulation.simplices:
       triangle_indices = [(p[0], p[1]), (p[0], p[2]), (p[1], p[2])]
-      edge_lengths = [self.distance(self.points[edge[0]], self.points[edge[1]]) for edge in triangle_indices]
-      for j, edge in enumerate(triangle_indices):
-        if sorted(edge) not in edges:
-          max_length = self.connect_ratio / self.longest_side * self.screen_height
-          if edge_lengths[j] <= max_length:
-            edges.append(edge)
-    cosines = self.calc_cosines(edge_lengths)
-    triangle_indices = [edge for k,edge in enumerate(triangle_indices) if cosines[k] > -0.8]
-    return edges
+      path_lengths = [self.distance(self.points[path[0]], self.points[path[1]]) for path in triangle_indices]
+      for j, path in enumerate(triangle_indices):
+        if not any(path == p for p in good_paths):
+          if path_lengths[j] <= self.max_path_length:
+            good_paths.append(sorted((self.points[path[0]], self.points[path[1]])))
+    for t in self.get_triangles(good_paths):
+      cosines = self.calc_cosines((self.distance(t[0], t[1]), self.distance(t[0], t[2]), self.distance(t[1], t[2])))
+      t_paths = [(t[0], t[1]), (t[0], t[2]), (t[1], t[2])]
+      for n,c in enumerate(cosines):
+        path = sorted(t_paths[n])
+        if c <= -0.7:
+          if not any(path == p for p in bad_paths):
+            bad_paths.append(path)
+          if any(path == p for p in good_paths):
+            good_paths = [p for p in good_paths if p != path]
+    return good_paths, bad_paths
+
+  def get_triangles(self, good_paths):
+      point_dict = {}
+      for a, b in good_paths:
+          if a not in point_dict:
+              point_dict[a] = []
+          if b not in point_dict:
+              point_dict[b] = []
+          if b not in point_dict[a]:
+              point_dict[a].append(b)
+          if a not in point_dict[b]:
+              point_dict[b].append(a)
+      triangle_list = []
+      for p1 in point_dict:
+          for p2 in point_dict[p1]:
+              for p3 in point_dict[p2]:
+                  if p3 in point_dict[p1]:
+                      triangle = tuple(sorted([(p1[0], p1[1]), (p2[0], p2[1]), (p3[0], p3[1])]))
+                      if triangle not in triangle_list:
+                        triangle_list.append(triangle)
+      return sorted(triangle_list)
 
   def render_background(self):
-    self.screen.fill((0,0,0))
-    side_length = self.screen.get_height()
-    border = pygame.Rect(0.5*(self.screen_width - self.screen_height), 0, side_length, side_length)
-    ocean = pygame.Rect(0.5*(self.screen_width - self.screen_height), 0, side_length, side_length)
-    pygame.draw.rect(self.screen, self.ocean_color, ocean)
-    pygame.draw.rect(self.screen, '#ffffff', border, 1)
-
-  def render_edges(self):
-    for e in self.region_edges:
-      pygame.draw.line(self.screen, self.edge_color, self.points[e[0]], self.points[e[1]])
+    if self.background_image:
+      self.screen.blit(self.background_image, (0, 0))
+    else:
+      self.screen.fill((0,0,0))
+      side_length = self.screen.get_height()
+      border = pygame.Rect(0.5*(self.screen_width - self.screen_height), 0, side_length, side_length)
+      ocean = pygame.Rect(0.5*(self.screen_width - self.screen_height), 0, side_length, side_length)
+      pygame.draw.rect(self.screen, self.ocean_colour, ocean)
+      terrain_colour = (0,50,0)
+      for e in self.good_paths:
+        pygame.draw.line(self.screen, terrain_colour, e[0], e[1], int(self.max_path_length))
+        pygame.draw.circle(self.screen, terrain_colour, e[0], int(self.max_path_length/2))
+        pygame.draw.circle(self.screen, terrain_colour, e[1], int(self.max_path_length/2))
+      for e in self.bad_paths:
+        pygame.draw.aaline(self.screen, (255,0,0), e[0], e[1])
+      for e in self.good_paths:
+        pygame.draw.aaline(self.screen, self.path_colour, e[0], e[1])
+      pygame.draw.rect(self.screen, self.path_colour, border, 1)
+      self.background_image = self.screen.copy()
 
   def render_points(self):
     for i, point in enumerate(self.points):
-      if random.random() < 6/self.total_regions:
-        color = (200,0,200)
-      else:
-        color = (0,200,0)
       if point in self.closest_points:
         if self.mouse_pressed:
           extra = 10
         else:
           extra = 5
-        pygame.draw.circle(self.screen, color, point, self.circle_radius+extra, 1)
-        pygame.draw.line(self.screen, color, point, pygame.mouse.get_pos())
-      pygame.draw.circle(self.screen, color, point, self.circle_radius)
+        pygame.draw.circle(self.screen, self.region_colour, point, self.circle_radius+extra, 1)
+        pygame.draw.aaline(self.screen, self.region_colour, point, pygame.mouse.get_pos())
+      pygame.draw.circle(self.screen, self.region_colour, point, self.circle_radius)
 
   def handle_events(self):
     for event in pygame.event.get():
@@ -108,6 +145,7 @@ class IslandGenerator:
         if event.key == pygame.K_ESCAPE:
           self.quit_game()
         elif event.key == pygame.K_SPACE:
+          self.background_image = None
           self.generate_points()
           self.update_screen()
       elif event.type == pygame.MOUSEMOTION:
@@ -124,7 +162,6 @@ class IslandGenerator:
           
   def update_screen(self):
     self.render_background()
-    self.render_edges()
     self.render_points()
     pygame.display.flip()
 
@@ -142,4 +179,4 @@ class IslandGenerator:
 
 if __name__ == '__main__':
   generator = IslandGenerator()
-  generator.run()
+  generator.run() 
