@@ -12,10 +12,10 @@ class IslandGenerator:
     self.ocean_colour = (0, 0, 50)
     self.region_colour = (0,200,0)
     self.path_colour = (50, 50, 255)
-    self.circle_radius = 3
+    self.circle_radius = 4
     self.pi = 3.14159265358979324
     self.mouse_pressed = False
-    self.total_regions = 64
+    self.total_regions = 256
     self.points = []
     self.min_x = self.max_x = self.min_y = self.max_y = 0
     self.connect_ratio = 4     # low = even spacing between regions (min 2)
@@ -34,7 +34,7 @@ class IslandGenerator:
     while len(self.points) < self.total_regions:
       magnitude = 1 + random.random()*(self.connect_ratio-1)
       direction = random.random()*2*self.pi # in radians
-      prev_point = random.choice(self.points[-1 - int(len(self.points)/self.island_angularity):])
+      prev_point = random.choice(self.points[-1 - int(len(self.points)/self.island_angularity):]) # increase an offset var by 1 per failed loop to prevent getting stuck
       x = prev_point[0] + magnitude*math.cos(direction)
       y = prev_point[1] + magnitude*math.sin(direction)
       for p in self.points:
@@ -61,16 +61,16 @@ class IslandGenerator:
             (-triangle[2]**2 + triangle[0]**2 + triangle[1]**2) / (2 * triangle[0] * triangle[1]))
 
   def calc_valid_paths(self):
-    triangulation = Delaunay(self.points, incremental=True)
+    triangulation = Delaunay(self.points)
     good_paths = []
     bad_paths = []
     self.max_path_length = self.connect_ratio / self.longest_side * self.screen_height
     for p in triangulation.simplices:
-      triangle_indices = [(p[0], p[1]), (p[0], p[2]), (p[1], p[2])]
-      path_lengths = [self.distance(self.points[path[0]], self.points[path[1]]) for path in triangle_indices]
-      for j, path in enumerate(triangle_indices):
+      triangle_paths = [(p[0], p[1]), (p[0], p[2]), (p[1], p[2])]
+      path_lengths = [self.distance(self.points[path[0]], self.points[path[1]]) for path in triangle_paths]
+      for j, path in enumerate(triangle_paths):
         if not any(path == p for p in good_paths):
-          if path_lengths[j] <= self.max_path_length:
+          if path_lengths[j] < self.max_path_length:
             good_paths.append(sorted((self.points[path[0]], self.points[path[1]])))
     for t in self.get_triangles(good_paths):
       cosines = self.calc_cosines((self.distance(t[0], t[1]), self.distance(t[0], t[2]), self.distance(t[1], t[2])))

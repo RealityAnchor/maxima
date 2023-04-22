@@ -1,6 +1,9 @@
 # github
 - readme
-- license
+- comments
+
+# features
+- pathfinding
 
 # abandon pygame
 - backend: Django (Model-Template-View)

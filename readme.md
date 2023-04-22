@@ -1,6 +1,8 @@
 ## Maxima
 Simultaneous-turn strategy boardgame
 
+![screenshot](https://github.com/RealityAnchor/maxima/blob/master/screenshots/256.png)
+
 ## Author
 Adam Ries
 
